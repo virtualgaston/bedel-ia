@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa de Correlativas — Historia</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* Local map-specific styles that aren't in styles.css */
+  .legend {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-pip { width: 10px; height: 10px; border-radius: 2px; }
+  
+  .map-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 20px 0;
+  }
+  .hint { 
+      font-size: 12px; 
+      color: var(--muted); 
+      text-align: center;
+      margin-bottom: 20px;
+      font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* MAP */
+  .map {
+    padding: 10px 20px 80px;
+    max-width: 1080px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .level-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  .level-label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 28px;
+    margin-bottom: 12px;
+    opacity: 0.7;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .cards-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+  }
+  .connector {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 12.5px;
+    line-height: 1.5;
+    max-width: 230px;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, opacity 0.18s;
+  }
+  .card:hover { border-color: var(--selected-border); box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+
+  .card.dim { opacity: 0.2; }
+
+  .card.state-selected {
+    background: var(--selected-bg);
+    border-color: var(--selected-border);
+    box-shadow: 0 0 0 2px var(--selected-border), 0 3px 12px rgba(0,0,0,0.08);
+    opacity: 1;
+  }
+  .card.state-selected .card-name { color: var(--selected); font-weight: 500; }
+
+  .card.state-prereq { background: var(--prereq-bg); border-color: var(--prereq-border); opacity: 1; }
+  .card.state-prereq .card-name { color: var(--prereq); }
+
+  .card.state-unlock { background: var(--unlock-bg); border-color: var(--unlock-border); opacity: 1; }
+  .card.state-unlock .card-name { color: var(--unlock); }
+
+  .card-name { font-size: 12.5px; line-height: 1.45; font-family: 'IBM Plex Mono', monospace;}
+  .card-tag {
+    font-size: 10px;
+    margin-top: 6px;
+    letter-spacing: 0.07em;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .tag-prereq { color: var(--prereq); }
+  .tag-unlock { color: var(--unlock); }
+  .tag-selected { color: var(--selected); }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Sistema Académico · Historia</h1>
+    <nav class="nav-links">
+        <a href="index.html">Inicio</a>
+        <a href="chat.html">Asistente Virtual</a>
+        <a href="correlativas.html" class="active">Correlativas</a>
+    </nav>
+</header>
+
+<main>
+    <div class="map-header-content">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-pip" style="background:var(--selected-border)"></div>Seleccionada</div>
+        <div class="legend-item"><div class="legend-pip" style="background:var(--prereq-border)"></div>Correlativas previas</div>
+        <div class="legend-item"><div class="legend-pip" style="background:var(--unlock-border)"></div>Lo que desbloquea</div>
+      </div>
+    </div>
+    
+    <div class="hint">Seleccione una asignatura para visualizar sus correlatividades correspondientes.</div>
+    
+    <div class="map" id="map"></div>
+</main>
+
+<script>
+const materias = [
+  { id: "inmersion",      name: "Inmersión a los estudios históricos",                            prereqs: [] },
+  { id: "intro_arq",      name: "Introducción a la arqueología",                                  prereqs: [] },
+  { id: "ideas_pol",      name: "Historia de las ideas políticas",                                prereqs: [] },
+  { id: "historiografia", name: "Historia de la historiografía",                                  prereqs: [] },
+  { id: "taller1",        name: "Taller de investigación I",                                      prereqs: [] },
+  { id: "pph1",           name: "Práctica Profesional Humanística I: Textos",                     prereqs: [] },
+  { id: "mundo1",         name: "Mundo Moderno I",                                                prereqs: [] },
+
+  { id: "arq1",           name: "Arqueología americana I",                                        prereqs: ["intro_arq"] },
+  { id: "egipto",         name: "Historia del Egipto y del Sudán antiguos",                      prereqs: ["intro_arq"] },
+  { id: "mesop",          name: "Historia de Mesopotamia antigua y del cercano oriente",          prereqs: ["intro_arq"] },
+  { id: "grecia",         name: "Historia de Grecia y del mundo Helenístico",                    prereqs: ["intro_arq"] },
+  { id: "roma",           name: "Historia de Roma y de la antigüedad tardía",                    prereqs: ["intro_arq"] },
+  { id: "taller2",        name: "Taller de investigación II: Archivos",                           prereqs: ["taller1"] },
+  { id: "pph2",           name: "Práctica Profesional Humanística II: Humanidades digitales",     prereqs: ["pph1"] },
+  { id: "paleografia",    name: "Práctica profesional específica: Paleografía",                  prereqs: ["pph1"] },
+  { id: "mundo2",         name: "Mundo Moderno II",                                               prereqs: ["mundo1"] },
+
+  { id: "arq2",           name: "Arqueología americana II",                                       prereqs: ["arq1"] },
+  { id: "medieval",       name: "Historia medieval",                                              prereqs: ["roma"] },
+  { id: "bizancio",       name: "Historia de Bizancio y del mundo neohelénico",                  prereqs: ["roma"] },
+  { id: "islamicas1",     name: "Historia de las sociedades Islámicas I",                        prereqs: ["roma"] },
+  { id: "prob_antigua",   name: "Problemas de historia antigua",                                  prereqs: ["roma"] },
+  { id: "taller3",        name: "Taller de investigación III: Museos",                            prereqs: ["taller2"] },
+
+  { id: "islamicas2",     name: "Historia de las sociedades Islámicas II",                       prereqs: ["islamicas1"] },
+  { id: "moderna1",       name: "Historia moderna I",                                             prereqs: ["medieval"] },
+  { id: "latam1",         name: "Historia de Latinoamérica I (Colonial)",                        prereqs: ["medieval"] },
+  { id: "rioplate",       name: "Historia del Río de la Plata colonial",                         prereqs: ["medieval"] },
+  { id: "prob_medieval",  name: "Problemas de historia medieval",                                 prereqs: ["medieval"] },
+
+  { id: "china",          name: "Historia de China y del Asia Central",                          prereqs: ["islamicas2"] },
+  { id: "moderna2",       name: "Historia moderna II",                                            prereqs: ["moderna1"] },
+  { id: "eeuu",           name: "Historia de los Estados Unidos",                                prereqs: ["moderna1"] },
+  { id: "rusia",          name: "Historia de Rusia",                                             prereqs: ["moderna1"] },
+  { id: "latam2",         name: "Historia de Latinoamérica II",                                  prereqs: ["latam1"] },
+  { id: "arg1",           name: "Historia Argentina I",                                          prereqs: ["latam1"] },
+
+  { id: "contemporanea",  name: "Historia contemporánea",                                         prereqs: ["moderna2"] },
+  { id: "prob_moderna",   name: "Problemas de historia moderna",                                  prereqs: ["moderna2"] },
+  { id: "latam3",         name: "Historia de Latinoamérica III",                                  prereqs: ["latam2"] },
+  { id: "arg2",           name: "Historia Argentina II",                                          prereqs: ["arg1"] },
+
+  { id: "arg3",           name: "Historia Argentina III",                                         prereqs: ["arg2"] },
+  { id: "prob_arg",       name: "Problemas de historia Argentina",                                prereqs: ["arg2"] },
+];
+
+function computeLevels() {
+  const levelMap = {};
+  const children = {};
+  materias.forEach(m => { levelMap[m.id] = 0; children[m.id] = []; });
+  materias.forEach(m => m.prereqs.forEach(p => children[p].push(m.id)));
+
+  const inDeg = {};
+  materias.forEach(m => inDeg[m.id] = m.prereqs.length);
+  const queue = materias.filter(m => !m.prereqs.length).map(m => m.id);
+  const visited = new Set();
+
+  while (queue.length) {
+    const id = queue.shift();
+    if (visited.has(id)) continue;
+    visited.add(id);
+    children[id].forEach(cid => {
+      levelMap[cid] = Math.max(levelMap[cid], levelMap[id] + 1);
+      if (--inDeg[cid] === 0) queue.push(cid);
+    });
+  }
+  return levelMap;
+}
+
+const levelMap = computeLevels();
+const maxLevel = Math.max(...Object.values(levelMap));
+const byLevel = Array.from({length: maxLevel + 1}, () => []);
+materias.forEach(m => byLevel[levelMap[m.id]].push(m));
+
+function getAllPrereqs(id, acc = new Set()) {
+  if (acc.has(id)) return acc;
+  acc.add(id);
+  materias.find(x => x.id === id)?.prereqs.forEach(p => getAllPrereqs(p, acc));
+  return acc;
+}
+function getAllUnlocks(id, acc = new Set()) {
+  if (acc.has(id)) return acc;
+  acc.add(id);
+  materias.filter(m => m.prereqs.includes(id)).forEach(m => getAllUnlocks(m.id, acc));
+  return acc;
+}
+
+let selected = null;
+
+function render() {
+  const map = document.getElementById('map');
+  map.innerHTML = '';
+
+  let prereqSet = new Set(), unlockSet = new Set();
+  if (selected) {
+    prereqSet = getAllPrereqs(selected); prereqSet.delete(selected);
+    unlockSet = getAllUnlocks(selected); unlockSet.delete(selected);
+  }
+
+  byLevel.forEach((col, lvl) => {
+    if (lvl > 0) {
+      const conn = document.createElement('div');
+      conn.className = 'connector';
+      map.appendChild(conn);
+    }
+
+    const group = document.createElement('div');
+    group.className = 'level-group';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'level-label';
+    lbl.textContent = lvl === 0 ? 'Sin correlativas previas' : `Nivel ${lvl}`;
+    group.appendChild(lbl);
+
+    const row = document.createElement('div');
+    row.className = 'cards-row';
+
+    col.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      let state = '', tagText = '', tagClass = '';
+      if (selected) {
+        if (m.id === selected)           { state = 'state-selected'; tagText = 'Seleccionada';       tagClass = 'tag-selected'; }
+        else if (prereqSet.has(m.id))    { state = 'state-prereq';   tagText = 'Requisito previo'; tagClass = 'tag-prereq'; }
+        else if (unlockSet.has(m.id))    { state = 'state-unlock';   tagText = 'Desbloquea';         tagClass = 'tag-unlock'; }
+        else                             { state = 'dim'; }
+      }
+      if (state) card.classList.add(state);
+
+      card.innerHTML = `<div class="card-name">${m.name}</div>`
+        + (tagText ? `<div class="card-tag ${tagClass}">${tagText}</div>` : '');
+
+      card.addEventListener('click', () => {
+        selected = selected === m.id ? null : m.id;
+        render();
+      });
+
+      row.appendChild(card);
+    });
+
+    group.appendChild(row);
+    map.appendChild(group);
+  });
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Virtual — Historia</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <h1>Sistema Académico · Historia</h1>
+        <nav class="nav-links">
+            <a href="index.html">Inicio</a>
+            <a href="chat.html" class="active">Asistente Virtual</a>
+            <a href="correlativas.html">Correlativas</a>
+        </nav>
+    </header>
+
+    <main class="chat-wrapper">
+        <!-- Pantalla de carga central -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loader-spinner"></div>
+            <div id="loading-text" class="loading-text">Inicializando el sistema...</div>
+            <div class="progress-container">
+                <div id="progress-bar-fill" class="progress-bar-fill"></div>
+            </div>
+            <div id="loading-progress" class="loading-progress"></div>
+        </div>
+
+        <div id="status-bar" style="display: none;">Inicializando el sistema...</div>
+        
+        <div id="chat-container"></div>
+        
+        <div class="input-group">
+            <select id="selector-materia" disabled>
+                <option value="inmersion">Inmersión a los estudios históricos</option>
+                <option value="mundo_moderno_1">Mundo Moderno I</option>
+                <option value="historia_medieval">Historia Medieval</option>
+                <option value="bizancio">Historia de Bizancio</option>
+                <option value="sistemas_socioculturales_1">Sistemas Socioculturales Americanos I</option>
+                <option value="sistemas_socioculturales_2">Sistemas Socioculturales Americanos II</option>
+                <option value="ideas_politicas">Historia de las Ideas Políticas</option>
+                <option value="humanidades_digitales">Humanidades Digitales</option>
+            </select>
+            
+            <div class="input-row">
+                <input type="text" id="pregunta" placeholder="Escriba su consulta académica aquí..." disabled>
+                <button id="enviar" disabled>Consultar</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Script principal de tipo módulo -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
