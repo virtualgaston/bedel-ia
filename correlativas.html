@@ -117,6 +117,26 @@
   .tag-prereq { color: var(--prereq); }
   .tag-unlock { color: var(--unlock); }
   .tag-selected { color: var(--selected); }
+
+  .card { position: relative; }
+  .card.abierta { max-width: 320px; }
+  .toggle {
+    position: absolute; top: 6px; right: 6px;
+    width: 22px; height: 22px; padding: 0;
+    border-radius: 50%; line-height: 1;
+    font-size: 15px; font-family: 'IBM Plex Mono', monospace;
+    background: var(--bg); color: var(--muted);
+    border: 1px solid var(--border); cursor: pointer;
+  }
+  .toggle:hover { color: var(--ink); border-color: var(--selected-border); }
+  .card-name { padding: 0 14px; }
+  .card-desc {
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px; line-height: 1.55;
+    color: var(--text); text-align: left;
+  }
 </style>
 </head>
 <body>
@@ -125,7 +145,6 @@
     <h1>Sistema Académico · Historia</h1>
     <nav class="nav-links">
         <a href="index.html">Inicio</a>
-        <a href="chat.html">Asistente Virtual</a>
         <a href="correlativas.html" class="active">Correlativas</a>
     </nav>
 </header>
@@ -234,7 +253,49 @@ function getAllUnlocks(id, acc = new Set()) {
   return acc;
 }
 
+const DESC = {
+ "inmersion": "Introduce al estudio de la historia como disciplina universitaria. Trabaja lectura crítica de textos, uso de fuentes y bibliografía, y las nociones básicas del oficio. Es la puerta de entrada a la carrera.",
+ "intro_arq": "Presenta los conceptos, métodos y técnicas de la arqueología. Explica cómo se excava, se registra y se interpreta la cultura material. Sirve de base para todas las historias antiguas.",
+ "ideas_pol": "Recorre el pensamiento político desde la antigüedad hasta la modernidad. Analiza autores, conceptos y debates sobre el poder, el Estado y la ciudadanía. Se lee a los pensadores en su contexto histórico.",
+ "historiografia": "Estudia cómo se escribió la historia a lo largo del tiempo. Revisa escuelas, corrientes y debates metodológicos, desde los cronistas hasta la historiografía actual. Ayuda a entender desde qué enfoque se produce cada relato.",
+ "taller1": "Primer taller de formación práctica en investigación. Se aprende a formular un problema, delimitar un tema y armar un estado de la cuestión. Es el inicio del recorrido que lleva a la tesis.",
+ "pph1": "Práctica centrada en el trabajo con textos escritos. Aborda lectura, análisis, edición y escritura académica. Desarrolla herramientas que se usan en toda la carrera.",
+ "mundo1": "Panorama introductorio de los procesos históricos de la modernidad temprana. Trabaja las transformaciones económicas, políticas y culturales de esa etapa. Es la primera materia de la línea de historia moderna.",
+ "arq1": "Estudia el poblamiento de América y las primeras sociedades del continente. Revisa los principales desarrollos culturales prehispánicos. Combina evidencia material con debates teóricos.",
+ "egipto": "Recorre la historia del valle del Nilo desde sus orígenes hasta la antigüedad tardía. Analiza el Estado, la religión, la sociedad y las relaciones con Nubia. Se apoya en fuentes escritas y arqueológicas.",
+ "mesop": "Estudia las sociedades del Tigris, el Éufrates y el Cercano Oriente antiguo. Aborda el surgimiento de las ciudades, la escritura y los grandes imperios. Trabaja con fuentes cuneiformes y arqueológicas.",
+ "grecia": "Recorre la historia griega desde la época arcaica hasta el período helenístico. Analiza la polis, la política, la sociedad y la cultura. Termina con las conquistas de Alejandro y sus consecuencias.",
+ "roma": "Estudia Roma desde sus orígenes hasta la transformación del Imperio. Analiza instituciones, expansión, sociedad y crisis del mundo romano. Es la base de las materias medievales.",
+ "taller2": "Segundo taller, enfocado en el trabajo con archivos y documentos. Se aprende a localizar, consultar y analizar fuentes primarias. Avanza en el diseño del proyecto de investigación.",
+ "pph2": "Introduce herramientas digitales aplicadas a la investigación humanística. Incluye bases de datos, digitalización y análisis de textos con medios informáticos. Busca ampliar las formas de producir y difundir conocimiento.",
+ "paleografia": "Enseña a leer escrituras antiguas y manuscritos. Se practica la transcripción y el análisis de documentos de distintas épocas. Es una herramienta clave para trabajar con fuentes originales.",
+ "mundo2": "Continúa el estudio de la modernidad, con foco en los procesos de los siglos posteriores. Analiza revoluciones, cambios políticos y transformaciones sociales. Completa el panorama iniciado en Mundo Moderno I.",
+ "arq2": "Profundiza en las sociedades complejas de América. Analiza casos regionales, el contacto con los europeos y su registro arqueológico. Discute problemas actuales de la disciplina en el continente.",
+ "medieval": "Recorre la Edad Media europea desde la caída de Roma hasta el siglo XV. Analiza feudalismo, Iglesia, monarquías y transformaciones económicas. Es la base de la historia moderna y colonial.",
+ "bizancio": "Estudia el Imperio Bizantino y su legado en el mundo griego posterior. Analiza política, religión, sociedad y cultura. Se extiende hasta la formación del mundo neohelénico.",
+ "islamicas1": "Aborda el surgimiento del Islam y la formación de los primeros califatos. Analiza expansión, instituciones y vida cultural. Cubre las primeras etapas de las sociedades islámicas.",
+ "prob_antigua": "Seminario que trata problemas puntuales y debates actuales sobre el mundo antiguo. Cada edición profundiza un tema con bibliografía especializada. Pone en práctica el análisis crítico de fuentes.",
+ "taller3": "Tercer taller, orientado al trabajo con museos y patrimonio. Se analiza cómo se construyen y exhiben los relatos históricos. Continúa el desarrollo del proyecto de investigación.",
+ "islamicas2": "Continúa el estudio del mundo islámico en etapas posteriores. Analiza los grandes imperios y las transformaciones de la región. Incluye el vínculo con Europa y con otras zonas de Asia y África.",
+ "moderna1": "Estudia Europa en los siglos XV a XVII. Analiza Renacimiento, Reforma, formación de los Estados y expansión ultramarina. Prepara para entender el mundo colonial y el contemporáneo.",
+ "latam1": "Recorre la conquista y el período colonial en América Latina. Analiza instituciones, economía, sociedad y poblaciones indígenas. Estudia cómo se organizó el dominio de España y Portugal.",
+ "rioplate": "Se centra en el territorio rioplatense durante la época colonial. Analiza su organización política, su economía y sus conflictos. Llega hasta la crisis del orden colonial.",
+ "prob_medieval": "Seminario sobre temas y debates específicos de la Edad Media. Cada edición profundiza un problema con bibliografía actual. Entrena en la lectura crítica y la discusión académica.",
+ "china": "Recorre la historia china y de las regiones de Asia Central. Analiza dinastías, intercambios comerciales y relaciones entre pueblos. Da una mirada no eurocéntrica de la historia mundial.",
+ "moderna2": "Estudia los siglos XVII y XVIII europeos. Analiza absolutismo, Ilustración y crisis del Antiguo Régimen. Termina en el umbral de las revoluciones.",
+ "eeuu": "Recorre la historia estadounidense desde la colonización hasta la actualidad. Analiza independencia, expansión, esclavitud, guerra civil y rol internacional. Da herramientas para entender su peso global.",
+ "rusia": "Estudia el desarrollo ruso desde sus orígenes hasta la época contemporánea. Analiza el imperio, la revolución y el período soviético. Se atiende a su ubicación entre Europa y Asia.",
+ "latam2": "Continúa con el siglo XIX latinoamericano. Analiza independencias, formación de los Estados nacionales y modelos económicos. Compara procesos entre distintos países de la región.",
+ "arg1": "Primera parte de la historia argentina. Analiza el período posterior a la crisis colonial y los inicios de la vida independiente. Trabaja los conflictos políticos y la formación del territorio.",
+ "contemporanea": "Estudia el mundo desde las revoluciones del siglo XVIII hasta la actualidad. Analiza capitalismo, nacionalismos, guerras mundiales y descolonización. Ofrece una visión global del siglo XX.",
+ "prob_moderna": "Seminario sobre temas y debates específicos de la modernidad. Cada edición profundiza un problema con bibliografía especializada. Promueve el análisis crítico y la discusión.",
+ "latam3": "Aborda el siglo XX latinoamericano hasta el presente. Analiza populismos, dictaduras, movimientos sociales y democratización. Relaciona la región con el contexto internacional.",
+ "arg2": "Segunda parte de la historia argentina. Recorre la consolidación del Estado, la economía agroexportadora y los cambios sociales. Analiza el sistema político de fines del siglo XIX y comienzos del XX.",
+ "arg3": "Tercera parte de la historia argentina, centrada en el siglo XX. Analiza peronismo, golpes de Estado, dictadura y democracia. Llega hasta la historia reciente.",
+ "prob_arg": "Seminario sobre debates y temas específicos de la historia argentina. Cada edición profundiza un problema con bibliografía actual. Entrena la discusión historiográfica."
+};
 let selected = null;
+const abiertas = new Set();
 
 function render() {
   const map = document.getElementById('map');
@@ -267,6 +328,8 @@ function render() {
     col.forEach(m => {
       const card = document.createElement('div');
       card.className = 'card';
+      const abierta = abiertas.has(m.id);
+      if (abierta) card.classList.add('abierta');
 
       let state = '', tagText = '', tagClass = '';
       if (selected) {
@@ -277,8 +340,16 @@ function render() {
       }
       if (state) card.classList.add(state);
 
-      card.innerHTML = `<div class="card-name">${m.name}</div>`
-        + (tagText ? `<div class="card-tag ${tagClass}">${tagText}</div>` : '');
+      card.innerHTML = `<button class="toggle" aria-expanded="${abierta}" aria-label="${abierta ? 'Ocultar' : 'Ver'} descripción">${abierta ? '−' : '+'}</button>`
+        + `<div class="card-name">${m.name}</div>`
+        + (tagText ? `<div class="card-tag ${tagClass}">${tagText}</div>` : '')
+        + (abierta ? `<div class="card-desc">${DESC[m.id]}</div>` : '');
+
+      card.querySelector('.toggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        abiertas.has(m.id) ? abiertas.delete(m.id) : abiertas.add(m.id);
+        render();
+      });
 
       card.addEventListener('click', () => {
         selected = selected === m.id ? null : m.id;
